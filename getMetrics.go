@@ -9,36 +9,38 @@ import (
 )
 
 func main() {
-        config, err := k8srest.InClusterConfig()
-        if err != nil {
-        fmt.Printf("error")
-        }
-        clientset, err := kubernetes.NewForConfig(config)
-        if err != nil {
-                panic(err.Error())
-        }
-
-        bytes, err := clientset.RESTClient().Get().AbsPath("/metrics").DoRaw(context.Background())
-
-        reader := strings.NewReader(string(bytes))
-
-	var parser expfmt.TextParser
-	parsed, err := parser.TextToMetricFamilies(reader)
+	config, err := k8srest.InClusterConfig()
 	if err != nil {
-		fmt.Println("Error parsing metrics:", err)
+		fmt.Printf("error getting in-cluster config: %v\n", err)
 		return
 	}
 
-	for metricName, metricFamily := range parsed {
-		for _, metric := range metricFamily.GetMetric() {
-			fmt.Printf("Metric name: %s\n", metricName)
-			fmt.Printf("Metric value: %v\n", metric.GetCounter().GetValue())
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		fmt.Printf("error creating clientset: %v\n", err)
+		return
+	}
 
-			for _, label := range metric.GetLabel() {
-				fmt.Printf("Label: %s Value: %s\n", label.GetName(), label.GetValue())
-			}
-			fmt.Println()
+	bytes, err := clientset.RESTClient().Get().AbsPath("/metrics").DoRaw(context.Background())
+	if err != nil {
+		fmt.Printf("error getting metrics: %v\n", err)
+		return
+	}
+
+	var parser expfmt.TextParser
+	metricFamilies, err := parser.TextToMetricFamilies(strings.NewReader(string(bytes)))
+	if err != nil {
+		fmt.Printf("error parsing metrics: %v\n", err)
+		return
+	}
+
+	metric := metricFamilies["apiserver_request_total"]
+	for _, m := range metric.Metric {
+		fmt.Printf("Labels:\n")
+		for _, l := range m.Label {
+			fmt.Printf("%s: %s\n", l.GetName(), l.GetValue())
 		}
+		fmt.Printf("Value: %v\n", m.GetCounter().GetValue())
 	}
 }
 
