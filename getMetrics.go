@@ -6,7 +6,6 @@ import (
         "k8s.io/client-go/kubernetes"
         k8srest "k8s.io/client-go/rest"
 	"github.com/prometheus/common/expfmt"
-	"github.com/prometheus/common/model"
 )
 
 func main() {
