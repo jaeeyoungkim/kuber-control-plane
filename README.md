@@ -17,3 +17,5 @@ export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 - go get k8s.io/client-go/kubernetes
 - go get k8s.io/client-go/rest
 - go get k8s.io/client-go/discovery@v0.28.3
+- go get github.com/prometheus/common/model
+- go get github.com/prometheus/common/expfmt

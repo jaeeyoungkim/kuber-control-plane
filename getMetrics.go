@@ -5,6 +5,8 @@ import (
         "fmt"
         "k8s.io/client-go/kubernetes"
         k8srest "k8s.io/client-go/rest"
+	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 )
 
 func main() {
@@ -20,5 +22,25 @@ func main() {
         bytes, err := clientset.RESTClient().Get().AbsPath("/metrics").DoRaw(context.Background())
 
         reader := strings.NewReader(string(bytes))
-        fmt.Println(reader)
+
+	var parser expfmt.TextParser
+	parsed, err := parser.TextToMetricFamilies(reader)
+	if err != nil {
+		fmt.Println("Error parsing metrics:", err)
+		return
+	}
+
+	for metricName, metricFamily := range parsed {
+		for _, metric := range metricFamily.GetMetric() {
+			fmt.Printf("Metric name: %s\n", metricName)
+			fmt.Printf("Metric value: %v\n", metric.GetCounter().GetValue())
+
+			for _, label := range metric.GetLabel() {
+				fmt.Printf("Label: %s Value: %s\n", label.GetName(), label.GetValue())
+			}
+			fmt.Println()
+		}
+	}
 }
+
+
