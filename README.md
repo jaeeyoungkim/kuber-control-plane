@@ -13,7 +13,7 @@ export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 -> go version go1.20.3 linux/amd64
 
 7. install go lib
-go mod init example.com/hello
-go get k8s.io/client-go/kubernetes
-go get k8s.io/client-go/rest
-go get k8s.io/client-go/discovery@v0.28.3
+- go mod init example.com/hello
+- go get k8s.io/client-go/kubernetes
+- go get k8s.io/client-go/rest
+- go get k8s.io/client-go/discovery@v0.28.3
