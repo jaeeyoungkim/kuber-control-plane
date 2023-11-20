@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"k8s.io/client-go/kubernetes"
@@ -33,7 +36,7 @@ func getApiserverRequestTotal(metric *io_prometheus_client.MetricFamily) {
 	}
 }
 
-func main() {
+func getMetrics() {
 	config, err := k8srest.InClusterConfig()
 	if err != nil {
 		fmt.Printf("error getting in-cluster config: %v\n", err)
@@ -80,4 +83,31 @@ func main() {
 	// 	fmt.Printf("Value: %v\n", m.GetCounter().GetValue())
 	// 	fmt.Printf("\n")
 	// }
+}
+
+func main() {
+	client, err := containerd.New("/run/containerd/containerd.sock")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	ctx := namespaces.WithNamespace(context.Background(), "k8s.io")
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, container := range containers {
+		spec, err := container.Spec(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, env := range spec.Process.Env {
+			if strings.HasPrefix(env, "whatap.oname=") && strings.HasSuffix(env, "KMaster") {
+				fmt.Println("Found container with 'whatap.oname=KMaster':", container.ID())
+			}
+		}
+	}
 }
