@@ -1,4 +1,4 @@
-package jykim
+package main
 
 import (
 	"fmt"
